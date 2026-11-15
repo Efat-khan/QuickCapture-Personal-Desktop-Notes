@@ -3,7 +3,8 @@ const { app } = require('electron');
 // Started at login with --hidden, so the app waits quietly in the tray instead of popping up.
 function loginItemOptions() {
   return {
-    path: process.execPath,
+    // The portable build runs from a temporary copy; PORTABLE_EXECUTABLE_FILE is the real .exe.
+    path: process.env.PORTABLE_EXECUTABLE_FILE || process.execPath,
     // When run from source (npm), Electron needs the app folder; an installed build is its own exe.
     args: app.isPackaged ? ['--hidden'] : [app.getAppPath(), '--hidden'],
   };

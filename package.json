@@ -1,7 +1,13 @@
 {
   "name": "quickcapture",
+  "productName": "QuickCapture",
+  "version": "1.0.0",
+  "description": "Capture text notes, voice notes and daily to-dos from a tiny always-on-top widget.",
+  "author": {
+    "name": "Efat-Khan"
+  },
+  "license": "UNLICENSED",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -11,13 +17,13 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "start": "electron ."
+    "start": "electron .",
+    "icons": "electron scripts/generate-icons.cjs",
+    "dist": "vite build && electron-builder --win",
+    "dist:dir": "vite build && electron-builder --win --dir"
   },
   "dependencies": {
-    "better-sqlite3": "^13.1.1",
-    "lucide-react": "^1.73.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "better-sqlite3": "^13.1.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
@@ -25,8 +31,70 @@
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^10.0.7",
     "electron": "^45.3.2",
+    "electron-builder": "^26.18.0",
+    "lucide-react": "^1.73.0",
     "oxlint": "^1.90.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "vite": "^8.3.6",
     "wait-on": "^9.5.1"
+  },
+  "build": {
+    "appId": "com.efatkhan.quickcapture",
+    "productName": "QuickCapture",
+    "copyright": "Copyright © 2026 Efat-Khan",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json",
+      "!node_modules/better-sqlite3/{deps,src,build}/**",
+      "!node_modules/better-sqlite3/binding.gyp",
+      "!node_modules/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*.node",
+      "!node_modules/better-sqlite3/prebuilds/win32-arm64.node"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*.node"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "license": "build/license.txt",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "QuickCapture",
+      "uninstallDisplayName": "QuickCapture",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    }
   }
 }

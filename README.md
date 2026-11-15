@@ -50,8 +50,24 @@ npm install
 npm run dev
 ```
 
-## Build renderer
+## Build the Windows installer
 
 ```bash
-npm run build
+npm run dist
 ```
+
+Creates, in `release/`:
+
+- `QuickCapture-Setup-<version>.exe`: installer (Start menu + desktop shortcuts, uninstaller,
+  shows the licence in `build/license.txt`). Installs per user, no admin rights needed.
+- `QuickCapture-Portable-<version>.exe`: runs without installing.
+
+Copy either file to another Windows PC; nothing else (Node, npm, Visual Studio) is needed there.
+User data lives in `%APPDATA%\QuickCapture` and is kept when uninstalling.
+
+The installers are not code-signed yet, so Windows SmartScreen shows "Windows protected your PC"
+on other machines (click **More info -> Run anyway**). Signing removes that warning.
+
+- Version: `version` in `package.json`. Publisher: `author` / `build.copyright`.
+- Icons: edit the design in `scripts/generate-icons.cjs`, then run `npm run icons`.
+- `npm run dist:dir` builds an unpacked app in `release/win-unpacked` (quicker, for testing).

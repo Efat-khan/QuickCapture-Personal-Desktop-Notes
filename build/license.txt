@@ -1,0 +1,32 @@
+QuickCapture - End User License Agreement
+
+Copyright (c) 2026 Efat-Khan. All rights reserved.
+
+By installing or using QuickCapture ("the Software") you agree to these terms.
+
+1. License
+   You may install and use the Software on devices you own or control for
+   personal or business use. You may not sell, rent, sublicense, modify,
+   decompile or redistribute the Software without written permission.
+
+2. Your data and privacy
+   QuickCapture stores your notes, recordings and to-do lists only on your
+   own computer, in your user profile folder. The Software does not send
+   your data anywhere. The microphone is used only while you are recording.
+   Uninstalling the Software keeps your data so you can reinstall later;
+   delete the QuickCapture folder in %APPDATA% to remove it.
+
+3. No warranty
+   The Software is provided "as is", without warranty of any kind, express
+   or implied, including but not limited to the warranties of
+   merchantability, fitness for a particular purpose and non-infringement.
+   Keep backups of anything important.
+
+4. Limitation of liability
+   In no event shall the author be liable for any claim, damages or other
+   liability, including loss of data, arising from the use of or inability
+   to use the Software.
+
+5. Termination
+   This license ends automatically if you break these terms. You must then
+   uninstall the Software.

@@ -28,6 +28,9 @@ const isDev = process.argv.includes('--dev');
 // Set when Windows starts the app at login: stay in the tray until the user needs it.
 let startHidden = process.argv.includes('--hidden');
 const AUDIO_SCHEME = 'qc-audio';
+// Must match "appId" in package.json: Windows uses it for notifications and taskbar pinning.
+const APP_USER_MODEL_ID = 'com.efatkhan.quickcapture';
+const ASSETS_DIR = path.join(__dirname, 'assets');
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_CONTENT_LENGTH = 1_000_000;
@@ -256,6 +259,7 @@ function createMainWindow() {
     fullscreenable: false,
     maximizable: false,
     skipTaskbar: false,
+    icon: path.join(ASSETS_DIR, 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -306,31 +310,6 @@ function createMainWindow() {
 
 /* ---------- tray ---------- */
 
-// Draws a 16pt (32px @2x) round icon. The previous icon was a 1x1 transparent pixel, i.e. invisible.
-function createTrayIcon() {
-  const size = 32;
-  const buffer = Buffer.alloc(size * size * 4);
-  const center = (size - 1) / 2;
-  const coverage = (radius, distance) => Math.min(1, Math.max(0, radius + 0.5 - distance));
-
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      const distance = Math.hypot(x - center, y - center);
-      const outer = coverage(15, distance);
-      const inner = coverage(5.5, distance);
-      // accent purple (#6655f5) disc with a white centre dot, premultiplied BGRA
-      const r = 0x66 * (1 - inner) + 0xff * inner;
-      const g = 0x55 * (1 - inner) + 0xff * inner;
-      const b = 0xf5 * (1 - inner) + 0xff * inner;
-      const i = (y * size + x) * 4;
-      buffer[i] = Math.round(b * outer);
-      buffer[i + 1] = Math.round(g * outer);
-      buffer[i + 2] = Math.round(r * outer);
-      buffer[i + 3] = Math.round(255 * outer);
-    }
-  }
-  return nativeImage.createFromBitmap(buffer, { width: size, height: size, scaleFactor: 2 });
-}
 
 function shortcutFor(action) {
   if (!getSetting('shortcutsEnabled')) return undefined;
@@ -387,7 +366,8 @@ function refreshTrayMenu() {
 }
 
 function createTray() {
-  tray = new Tray(createTrayIcon());
+  // tray.png is picked for normal displays, tray@2x.png automatically for high-DPI ones.
+  tray = new Tray(nativeImage.createFromPath(path.join(ASSETS_DIR, 'tray.png')));
   tray.setToolTip('QuickCapture');
   refreshTrayMenu();
   // Just bring the window back; don't throw away whatever the user was doing in it.
@@ -597,6 +577,8 @@ function registerAudioProtocol() {
 }
 
 /* ---------- lifecycle ---------- */
+
+if (process.platform === 'win32') app.setAppUserModelId(APP_USER_MODEL_ID);
 
 if (!app.requestSingleInstanceLock()) {
   // A second copy would add a second tray icon and a second writer to the same database.

@@ -546,11 +546,12 @@ button:focus-visible,
 
 .toast {
   position: fixed;
-  /* Top centre: never covers the action buttons at the bottom of a panel. */
-  top: 10px;
+  /* Bottom centre, lifted above the button row at the bottom of each window. */
+  bottom: 62px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
+  animation: toast-in 0.18s ease-out;
   white-space: nowrap;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(34, 197, 139, 0.45);
@@ -562,6 +563,26 @@ button:focus-visible,
   padding: 8px 10px;
   font-size: 12px;
   max-width: calc(100% - 24px);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
+/* The dashboard has no bottom button row. */
+.mode-dashboard .toast {
+  bottom: 20px;
+}
+
+/* The widget bar is only 44px tall: show the message over the middle of it. */
+.mode-pill .toast {
+  bottom: 50%;
+  transform: translate(-50%, 50%);
+  padding: 6px 10px;
+  animation: none;
 }
 
 .toast.error {

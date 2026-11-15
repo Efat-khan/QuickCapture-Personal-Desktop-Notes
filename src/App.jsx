@@ -127,6 +127,25 @@ function App() {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  // On the widget, a message is shown outside the bar: the window grows to make room
+  // (below the bar, or above it when the widget sits at the bottom of the screen).
+  const pillToastVisible = mode === MODES.pill && toast !== null;
+  const [toastPlacement, setToastPlacement] = useState('below');
+  useEffect(() => {
+    if (!pillToastVisible) return undefined;
+    let active = true;
+    api.app
+      .setPillToast(true)
+      .then((result) => {
+        if (active && result?.placement) setToastPlacement(result.placement);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+      api.app.setPillToast(false).catch(() => {});
+    };
+  }, [pillToastVisible]);
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
@@ -637,7 +656,7 @@ function App() {
   );
 
   return (
-    <main className={`app mode-${mode}`}>
+    <main className={`app mode-${mode}${pillToastVisible ? ` toast-${toastPlacement}` : ''}`}>
       {mode === MODES.pill && (recorder.status === 'idle' || recorder.status === 'error' ? pill : pillRecordingBar)}
       {mode === MODES.popup && popup}
       {mode === MODES.text && textEditor}

@@ -577,12 +577,28 @@ button:focus-visible,
   bottom: 20px;
 }
 
-/* The widget bar is only 44px tall: show the message over the middle of it. */
+/* Widget: the bar keeps its 44px height even while the window is taller for a message. */
+.mode-pill .pill-root,
+.mode-pill .pill-recording {
+  height: 44px;
+}
+
+/* Message under the bar (the window grows downwards to make room)... */
 .mode-pill .toast {
-  bottom: 50%;
-  transform: translate(-50%, 50%);
-  padding: 6px 10px;
-  animation: none;
+  top: 50px;
+  bottom: auto;
+  padding: 6px 12px;
+}
+
+/* ...or above it, when the widget sits at the bottom of the screen (the window grows upwards). */
+.mode-pill.toast-above {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.mode-pill.toast-above .toast {
+  top: 6px;
 }
 
 .toast.error {

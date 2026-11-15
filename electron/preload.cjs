@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('quickCapture', {
     hideWidget: () => ipcRenderer.invoke('app:hide-widget'),
     minimize: () => ipcRenderer.invoke('app:minimize'),
     getShortcuts: () => ipcRenderer.invoke('app:get-shortcuts'),
+    setPillToast: (show) => ipcRenderer.invoke('app:pill-toast', show),
     onTrayAction: (callback) => {
       const channel = 'tray:action';
       const listener = (_, payload) => callback(payload);

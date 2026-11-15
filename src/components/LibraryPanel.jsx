@@ -1,4 +1,4 @@
-import { AudioLines, FolderOpen, Mic, NotebookText, Plus } from 'lucide-react';
+import { ArrowLeft, AudioLines, FolderOpen, Mic, NotebookText, Plus } from 'lucide-react';
 import { NoteItem } from './NoteItem.jsx';
 import { RecordingItem } from './RecordingItem.jsx';
 
@@ -89,8 +89,8 @@ export function LibraryPanel({
             <FolderOpen size={14} /> Open folder
           </button>
         )}
-        <button className="ghost" onClick={onClose}>
-          Close
+        <button className="ghost back-btn" onClick={onClose} title="Back to the widget (Esc)">
+          <ArrowLeft size={14} /> Back
         </button>
       </div>
     </div>

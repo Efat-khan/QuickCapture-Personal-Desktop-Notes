@@ -56,7 +56,8 @@ let mainWindow = null;
 let tray = null;
 let isQuitting = false;
 let currentMode = 'pill';
-let compactPosition = null; // where the pill/popup lives, restored when leaving the dashboard
+let compactPosition = null; // where the user put the widget; every compact window opens from here
+let applyingBounds = false; // true while the app itself moves/resizes the window
 let saveStateTimer = null;
 
 // System-wide shortcuts. Ctrl+Alt combinations avoid clashing with everyday app shortcuts
@@ -69,6 +70,11 @@ const SHORTCUTS = [
   { action: 'toggle-widget', accelerator: 'CommandOrControl+Alt+Space', label: 'Show / Hide Widget' },
 ];
 let failedShortcuts = [];
+
+// The widget bar is only 44px tall, so to show a message *under* it the (transparent) window is
+// briefly made taller. If there is no room below, it grows upwards and the message goes above.
+const PILL_TOAST_SPACE = 44;
+let pillToast = null; // { placement: 'below' | 'above' } while the widget window is enlarged
 
 /* ---------- window state ---------- */
 
@@ -103,9 +109,12 @@ function writeWindowState() {
 }
 
 function rememberCompactPosition() {
-  if (!mainWindow || mainWindow.isDestroyed() || currentMode === 'dashboard') return;
+  // Only the user dragging the window counts. Moves made by the app (e.g. nudging the editor up so
+  // it fits on screen) must not change where the widget goes back to.
+  if (applyingBounds || !mainWindow || mainWindow.isDestroyed() || currentMode === 'dashboard') return;
   const [x, y] = mainWindow.getPosition();
-  compactPosition = { x, y };
+  // While enlarged upwards for a message, the bar sits PILL_TOAST_SPACE below the window's top.
+  compactPosition = { x, y: y + (pillToast?.placement === 'above' ? PILL_TOAST_SPACE : 0) };
   // 'move' fires continuously while dragging; write once the window settles.
   clearTimeout(saveStateTimer);
   saveStateTimer = setTimeout(writeWindowState, 500);
@@ -117,9 +126,49 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), Math.max(min, max));
 }
 
+/** Enlarges (show=true) or restores (show=false) the widget window around a message. */
+/** Moves/resizes the window without it counting as a user move. */
+function applyBounds(bounds) {
+  applyingBounds = true;
+  try {
+    // Windows resizes non-resizable windows fine, and toggling resizable there adds rounding
+    // errors at fractional display scaling (e.g. 125%). Other platforms need the toggle.
+    const toggle = process.platform !== 'win32' && !mainWindow.isResizable();
+    if (toggle) mainWindow.setResizable(true);
+    mainWindow.setBounds(bounds);
+    if (toggle) mainWindow.setResizable(false);
+  } finally {
+    applyingBounds = false;
+  }
+}
+
+function setPillToastSpace(show) {
+  if (!mainWindow || mainWindow.isDestroyed() || currentMode !== 'pill') return { placement: null };
+  if (show === Boolean(pillToast)) return { placement: pillToast?.placement ?? null };
+
+  const { width, height } = windowModes.pill;
+  const bounds = mainWindow.getBounds();
+  let y;
+  if (show) {
+    const { workArea } = screen.getDisplayMatching(bounds);
+    const fitsBelow = bounds.y + height + PILL_TOAST_SPACE <= workArea.y + workArea.height;
+    // Set before moving: the 'move' handler uses it to keep remembering the bar's own position.
+    pillToast = { placement: fitsBelow ? 'below' : 'above' };
+    y = fitsBelow ? bounds.y : bounds.y - PILL_TOAST_SPACE;
+  } else {
+    y = pillToast.placement === 'above' ? bounds.y + PILL_TOAST_SPACE : bounds.y;
+    pillToast = null;
+  }
+
+  applyBounds({ x: bounds.x, y, width, height: show ? height + PILL_TOAST_SPACE : height });
+  return { placement: pillToast?.placement ?? null };
+}
+
 function setWindowMode(mode) {
   const config = windowModes[mode];
   if (!config || !mainWindow || mainWindow.isDestroyed()) return false;
+  // Leaving the widget while it shows a message: put the bar back first so positions stay right.
+  if (pillToast) setPillToastSpace(false);
 
   const previousMode = currentMode;
   const current = mainWindow.getBounds();
@@ -128,10 +177,14 @@ function setWindowMode(mode) {
   const height = Math.min(config.height, workArea.height);
 
   let { x, y } = current;
-  if (mode === 'dashboard' && previousMode !== 'dashboard') {
-    x = workArea.x + Math.round((workArea.width - width) / 2);
-    y = workArea.y + Math.round((workArea.height - height) / 2);
-  } else if (mode !== 'dashboard' && previousMode === 'dashboard' && compactPosition) {
+  if (mode === 'dashboard') {
+    if (previousMode !== 'dashboard') {
+      x = workArea.x + Math.round((workArea.width - width) / 2);
+      y = workArea.y + Math.round((workArea.height - height) / 2);
+    }
+  } else if (compactPosition) {
+    // Every compact window (widget, editor, to-do, ...) opens from where the user put the widget,
+    // so closing a panel that had to be nudged to fit on screen puts the widget back in its spot.
     ({ x, y } = compactPosition);
   }
 
@@ -140,10 +193,9 @@ function setWindowMode(mode) {
   y = clamp(y, workArea.y, workArea.y + workArea.height - height);
 
   currentMode = mode;
-  // Some platforms ignore size changes on non-resizable windows.
-  mainWindow.setResizable(true);
-  mainWindow.setBounds({ x, y, width, height });
-  mainWindow.setResizable(config.resizable);
+  if (config.resizable) mainWindow.setResizable(true);
+  applyBounds({ x, y, width, height });
+  if (!config.resizable) mainWindow.setResizable(false);
   mainWindow.setAlwaysOnTop(config.alwaysOnTop);
   return true;
 }
@@ -212,6 +264,11 @@ function createMainWindow() {
       spellcheck: true,
     },
   });
+
+  if (!compactPosition) {
+    const [x, y] = mainWindow.getPosition();
+    compactPosition = { x, y };
+  }
 
   mainWindow.once('ready-to-show', () => {
     if (startHidden) {
@@ -421,6 +478,8 @@ function registerIpcHandlers() {
   });
 
   // Minimize to the taskbar (restored from the taskbar or by clicking the tray icon).
+  ipcMain.handle('app:pill-toast', (_event, show) => setPillToastSpace(Boolean(show)));
+
   ipcMain.handle('app:minimize', () => {
     mainWindow?.minimize();
     return { ok: true };

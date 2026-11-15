@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDownToLine, Check, ChevronLeft, ChevronRight, ListTodo, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, Check, ChevronLeft, ChevronRight, ListTodo, Pencil, Plus, Trash2 } from 'lucide-react';
 import { describeDay, shiftDayKey, toDayKey } from '../lib/day.js';
 
 const api = window.quickCapture;
@@ -275,8 +275,8 @@ export function TodoPanel({ notify, onClose }) {
             Clear completed ({doneCount})
           </button>
         )}
-        <button className="ghost" onClick={onClose}>
-          Close
+        <button className="ghost back-btn" onClick={onClose} title="Back to the widget (Esc)">
+          <ArrowLeft size={14} /> Back
         </button>
       </div>
     </div>

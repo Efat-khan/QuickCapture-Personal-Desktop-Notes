@@ -1,4 +1,6 @@
 :root {
+  /* Dark native controls: scrollbars, <audio> players, form widgets. */
+  color-scheme: dark;
   --bg-main: #0b0d14;
   --bg-secondary: #121622;
   --bg-card: #181d2b;
@@ -45,54 +47,213 @@ textarea {
   -webkit-app-region: no-drag;
 }
 
+/* ---------- floating widget ---------- */
+
 .pill-root {
   width: 100%;
   height: 100%;
-  padding: 10px;
-  border-radius: 999px;
+  padding: 0 6px 0 7px;
+  border-radius: 10px;
   border: 1px solid var(--border);
-  background: linear-gradient(135deg, rgba(102, 85, 245, 0.15), rgba(24, 201, 220, 0.06)), var(--bg-secondary);
+  background:
+    linear-gradient(135deg, rgba(102, 85, 245, 0.16), rgba(24, 201, 220, 0.05)),
+    var(--bg-secondary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  user-select: none;
 }
 
 .pill-brand {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: var(--accent-cyan);
-  font-size: 13px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pill-logo {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+  cursor: grab;
+}
+
+.pill-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill-btn {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+/* Count of today's unfinished tasks on the To-do button */
+.pill-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  color: #0b0d14;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 0 2px var(--bg-secondary);
+}
+
+.pill-btn:hover:not(:disabled) {
+  background: rgba(102, 85, 245, 0.2);
+  border-color: var(--accent-primary);
+}
+
+.pill-btn.recording {
+  border-color: var(--recording);
+  color: var(--recording);
+  background: rgba(255, 82, 92, 0.14);
+  animation: pill-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pill-pulse {
+  50% {
+    box-shadow: 0 0 0 3px rgba(255, 82, 92, 0.25);
+  }
+}
+
+.pill-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 1px;
+  background: var(--border);
+}
+
+/* Recording mode: the widget shows only the recorder controls */
+.pill-recording {
+  background:
+    linear-gradient(135deg, rgba(255, 82, 92, 0.14), rgba(102, 85, 245, 0.06)),
+    var(--bg-secondary);
+  border-color: rgba(255, 82, 92, 0.35);
+}
+
+.pill-rec-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 4px;
+  font-size: 12px;
+}
+
+.pill-recording .dot.active {
+  animation: rec-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes rec-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.pill-rec-label {
   font-weight: 600;
 }
 
-.pill-action,
-.pill-mic,
-.pill-close,
+.pill-rec-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.pill-btn.stop {
+  color: #fff;
+  border-color: transparent;
+  background: var(--recording);
+}
+
+.pill-btn.stop:hover:not(:disabled) {
+  border-color: transparent;
+  background: #ff6b73;
+}
+
+.pill-btn.discard:hover:not(:disabled) {
+  border-color: var(--recording);
+  color: var(--recording);
+  background: rgba(255, 82, 92, 0.12);
+}
+
+/* Minimize / close: smaller and quieter than the action tiles */
+.pill-ctl {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 6px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.pill-ctl:hover:not(:disabled) {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+}
+
+.pill-ctl.close:hover:not(:disabled) {
+  background: rgba(255, 82, 92, 0.2);
+  color: var(--recording);
+}
+
 button {
   border: 1px solid var(--border);
   background: rgba(11, 13, 20, 0.8);
-  border-radius: 10px;
-  padding: 7px 10px;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 12px;
+  line-height: 1.3;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
 }
 
-button:hover {
+/* Square buttons that only hold an icon */
+.icon-btn {
+  padding: 5px;
+}
+
+button:hover:not(:disabled) {
   border-color: var(--accent-secondary);
 }
 
-.pill-mic {
-  border-radius: 50%;
-  padding: 8px;
-  margin-left: auto;
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
-.pill-close {
-  border-radius: 8px;
-  padding: 8px;
+button:focus-visible,
+.field:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 1px;
 }
 
 .panel {
@@ -111,14 +272,21 @@ button:hover {
   font-size: 16px;
 }
 
+/* Frameless window: the header is the handle for moving it. */
+.panel-header {
+  cursor: grab;
+  user-select: none;
+}
+
 .quick-actions {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .quick-actions button {
   width: 100%;
   justify-content: center;
+  padding: 7px 9px;
 }
 
 .panel-footer,
@@ -137,13 +305,19 @@ button:hover {
 }
 
 .area {
-  min-height: 110px;
-  resize: vertical;
+  flex: 1;
+  min-height: 90px;
+  resize: none;
 }
 
 .primary {
   background: linear-gradient(120deg, var(--accent-primary), var(--accent-secondary));
   border-color: transparent;
+  color: #fff;
+}
+
+.primary:disabled {
+  opacity: 0.8;
 }
 
 .ghost {
@@ -183,9 +357,11 @@ button:hover {
 
 .dashboard {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 12px;
   height: 100%;
+  overflow: hidden;
   padding: 12px;
   border-radius: 16px;
   border: 1px solid var(--border);
@@ -207,6 +383,20 @@ button:hover {
   font-size: 16px;
 }
 
+.sidebar-header {
+  padding: 4px 0 8px;
+  user-select: none;
+}
+
+.badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
 .sidebar nav {
   display: grid;
   gap: 8px;
@@ -214,16 +404,18 @@ button:hover {
 
 .sidebar nav button {
   justify-content: flex-start;
+  width: 100%;
 }
 
-.sidebar nav button.active,
-.filters button.active {
+.sidebar nav button.active {
   border-color: var(--accent-cyan);
   background: rgba(24, 201, 220, 0.1);
 }
 
 .local-hint {
   margin-top: auto;
+  display: grid;
+  gap: 6px;
   color: var(--text-muted);
   font-size: 12px;
 }
@@ -237,11 +429,12 @@ button:hover {
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) auto auto;
+  grid-template-columns: minmax(200px, 1fr) auto auto auto;
   gap: 10px;
   align-items: center;
 }
@@ -263,20 +456,27 @@ button:hover {
   width: 100%;
 }
 
-.filters {
-  display: flex;
-  gap: 8px;
-}
-
+/* flex: 1 + min-height: 0 is what lets the list scroll instead of overflowing the window. */
 .timeline {
-  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
+  align-content: start;
   gap: 14px;
   padding-right: 2px;
 }
 
+.date-group {
+  display: grid;
+  gap: 8px;
+  /* Skip layout/paint for off-screen groups in long lists. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+}
+
 .date-group h3 {
-  margin: 0 0 8px;
+  margin: 0;
   color: var(--accent-cyan);
   font-size: 14px;
 }
@@ -291,9 +491,22 @@ button:hover {
   gap: 10px;
 }
 
+.note-body {
+  min-width: 0;
+  flex: 1;
+}
+
 .note-card h4 {
   margin: 0;
   font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.note-actions {
+  display: flex;
+  gap: 6px;
+  align-self: flex-start;
+  flex-shrink: 0;
 }
 
 .meta {
@@ -305,6 +518,16 @@ button:hover {
 .preview {
   margin: 0;
   font-size: 13px;
+}
+
+/* Keep line breaks the user typed, but cap long notes at a few lines. */
+.text-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .audio-preview {
@@ -323,12 +546,694 @@ button:hover {
 
 .toast {
   position: fixed;
-  bottom: 12px;
-  right: 12px;
-  border: 1px solid rgba(34, 197, 139, 0.3);
-  background: rgba(34, 197, 139, 0.2);
+  /* Top centre: never covers the action buttons at the bottom of a panel. */
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(34, 197, 139, 0.45);
+  background: #10352b;
   color: #d8ffe9;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 12px;
+  max-width: calc(100% - 24px);
+}
+
+.toast.error {
+  border-color: rgba(255, 82, 92, 0.5);
+  background: #3b1a20;
+  color: #ffe1e3;
+}
+
+/* ---------- recordings popup ---------- */
+
+.recordings-panel {
+  gap: 10px;
+}
+
+.rec-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rec-title .badge {
+  margin-left: 0;
+}
+
+.rec-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rec-list::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--border);
+}
+
+.rec-list::-webkit-scrollbar-thumb:hover {
+  background: #3a4258;
+}
+
+.rec-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding-right: 4px;
+}
+
+.rec-group h3 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 6px;
+  padding: 2px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--accent-cyan);
+  background: var(--bg-secondary);
+}
+
+.rec-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.rec-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 8px 10px;
+  display: grid;
+  gap: 6px;
+  transition: border-color 0.15s;
+}
+
+.rec-item:hover {
+  border-color: rgba(102, 85, 245, 0.6);
+}
+
+.rec-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rec-info {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.rec-info strong {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rec-tools {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rec-tool {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rec-tool.danger:hover:not(:disabled) {
+  border-color: var(--recording);
+  color: var(--recording);
+  background: rgba(255, 82, 92, 0.12);
+}
+
+.rec-item audio {
+  width: 100%;
+  height: 30px;
+}
+
+.rec-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+
+.rec-empty p {
+  margin: 0;
+}
+
+/* Click-to-rename recording title */
+.rec-name {
+  cursor: text;
+  border-radius: 4px;
+}
+
+.rec-name:hover {
+  text-decoration: underline dotted var(--text-muted);
+  text-underline-offset: 3px;
+}
+
+.rec-title-input {
+  padding: 3px 7px;
+  font-size: 13px;
+  font-weight: 600;
+  border-color: var(--accent-primary);
+}
+
+/* ---------- text notes popup ---------- */
+
+/* Note body: a button so it can be clicked to expand; reset the default button look. */
+.note-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #d3d8e4;
+  cursor: pointer;
+}
+
+.note-text:hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--text-main);
+}
+
+.note-text.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.note-text.empty-text {
+  color: var(--text-muted);
+  font-style: italic;
+  cursor: default;
+}
+
+/* ---------- library tabs ---------- */
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-main);
+}
+
+.tab {
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tab.active,
+.tab.active:hover:not(:disabled) {
+  color: #fff;
+  background: linear-gradient(120deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.tab-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ---------- text note editor ---------- */
+
+.editor {
+  /* Lets the footer adapt to the window width (see the @container rule below). */
+  container-type: inline-size;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.editor:focus-within {
+  border-color: #353c55;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px 11px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.015);
+  user-select: none;
+}
+
+.editor-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.editor-heading {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  line-height: 1.3;
+}
+
+.editor-heading strong {
+  font-size: 13px;
+}
+
+.editor-heading span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 20px 8px;
+}
+
+.editor-title,
+.editor-content {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-main);
+}
+
+.editor-title {
+  padding: 2px 0 6px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.editor-content {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  padding: 2px 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #dde1ea;
+}
+
+.editor-title::placeholder,
+.editor-content::placeholder {
+  color: #4e5569;
+}
+
+.editor-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editor-content::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--border);
+}
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px 10px 20px;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Left side of the footer: may shrink or hide; the buttons on the right never do. */
+.editor-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.editor-stats {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-warning {
+  color: #ffb547;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.editor-hint kbd {
+  font: inherit;
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 5px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+.editor-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+}
+
+@container (max-width: 480px) {
+  .editor-hint {
+    display: none;
+  }
+}
+
+.editor-actions button {
+  padding: 6px 12px;
+}
+
+.editor-actions .primary {
+  padding: 6px 14px;
+  font-weight: 600;
+}
+
+/* ---------- daily to-do ---------- */
+
+.todo-panel {
+  gap: 10px;
+}
+
+.todo-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+
+.panel .todo-header h2 {
+  font-size: 15px;
+}
+
+.todo-day {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.todo-day-label {
+  min-width: 118px;
+  display: grid;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.todo-day-label strong {
+  font-size: 13px;
+}
+
+.todo-day-label span {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.todo-back-today {
+  align-self: flex-end;
+  margin-top: -4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent-cyan);
+}
+
+.todo-back-today:hover:not(:disabled) {
+  border-color: transparent;
+  text-decoration: underline;
+}
+
+.todo-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.todo-progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-main);
+  overflow: hidden;
+}
+
+.todo-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan));
+  transition: width 0.3s ease;
+}
+
+.todo-progress-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.todo-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 181, 71, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 181, 71, 0.08);
+  font-size: 12px;
+  color: #ffd79a;
+}
+
+.todo-banner button {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-color: rgba(255, 181, 71, 0.4);
+  background: rgba(255, 181, 71, 0.12);
+  color: #ffe2b5;
+}
+
+.todo-banner button:hover:not(:disabled) {
+  border-color: #ffb547;
+}
+
+.todo-add {
+  display: flex;
+  gap: 6px;
+}
+
+.todo-add .field {
+  flex: 1;
+  padding: 8px 10px;
+}
+
+.todo-add .primary {
+  width: 36px;
+  padding: 0;
+  justify-content: center;
+}
+
+.todo-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 4px 0 0;
+  list-style: none;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+
+.todo-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.todo-list::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: var(--border);
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 6px 8px 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: var(--bg-card);
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.todo-item:hover {
+  border-color: var(--border);
+}
+
+.todo-check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  justify-content: center;
+  border: 2px solid #4a5170;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.todo-check:hover:not(:disabled) {
+  border-color: var(--accent-cyan);
+}
+
+.todo-item.done .todo-check {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+}
+
+.todo-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.todo-item.done {
+  opacity: 0.6;
+}
+
+.todo-item.done .todo-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.todo-edit {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--accent-primary);
+  border-radius: 6px;
+  background: var(--bg-main);
+  outline: none;
+  font-size: 13px;
+}
+
+/* Edit/delete appear on hover or keyboard focus, keeping the list calm. */
+.todo-tools {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.todo-item:hover .todo-tools,
+.todo-item:focus-within .todo-tools {
+  opacity: 1;
+}
+
+.todo-tools .rec-tool {
+  width: 24px;
+  height: 24px;
+}
+
+.todo-empty {
+  padding: 32px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.todo-clear {
+  margin-right: auto;
 }

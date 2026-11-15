@@ -5,13 +5,13 @@
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on tcp:5173 && electron . --no-sandbox\"",
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron . --dev\"",
     "dev:web": "vite",
-    "dev:desktop": "wait-on tcp:5173 && electron . --no-sandbox",
+    "dev:desktop": "wait-on tcp:5173 && electron . --dev",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "start": "electron . --no-sandbox"
+    "start": "electron ."
   },
   "dependencies": {
     "better-sqlite3": "^13.1.1",

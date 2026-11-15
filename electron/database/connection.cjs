@@ -13,7 +13,16 @@ function getDb() {
 
   db = new Database(path.join(dbDir, 'quickcapture.db'));
   db.pragma('journal_mode = WAL');
+  // NORMAL is crash-safe in WAL mode and avoids an fsync on every write.
+  db.pragma('synchronous = NORMAL');
+  db.pragma('foreign_keys = ON');
   return db;
 }
 
-module.exports = { getDb };
+function closeDb() {
+  if (!db) return;
+  db.close();
+  db = undefined;
+}
+
+module.exports = { getDb, closeDb };

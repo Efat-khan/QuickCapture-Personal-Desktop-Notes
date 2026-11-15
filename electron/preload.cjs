@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('quickCapture', {
   app: {
     setMode: (mode) => ipcRenderer.invoke('app:set-mode', mode),
     hideWidget: () => ipcRenderer.invoke('app:hide-widget'),
+    minimize: () => ipcRenderer.invoke('app:minimize'),
     onTrayAction: (callback) => {
       const channel = 'tray:action';
       const listener = (_, payload) => callback(payload);
@@ -20,6 +21,19 @@ contextBridge.exposeInMainWorld('quickCapture', {
   audio: {
     save: (arrayBuffer, title, durationSeconds) =>
       ipcRenderer.invoke('audio:save', arrayBuffer, title, durationSeconds),
-    getUrl: (relativePath) => ipcRenderer.invoke('audio:get-url', relativePath),
+  },
+  todos: {
+    list: (day) => ipcRenderer.invoke('todos:list', day),
+    create: (day, text) => ipcRenderer.invoke('todos:create', day, text),
+    update: (id, patch) => ipcRenderer.invoke('todos:update', id, patch),
+    delete: (id) => ipcRenderer.invoke('todos:delete', id),
+    clearDone: (day) => ipcRenderer.invoke('todos:clear-done', day),
+    openBefore: (day) => ipcRenderer.invoke('todos:open-before', day),
+    carryOver: (day) => ipcRenderer.invoke('todos:carry-over', day),
+  },
+  files: {
+    showInFolder: (relativePath) => ipcRenderer.invoke('files:show-in-folder', relativePath),
+    openDataFolder: () => ipcRenderer.invoke('files:open-data-folder'),
+    openRecordingsFolder: () => ipcRenderer.invoke('files:open-recordings-folder'),
   },
 });

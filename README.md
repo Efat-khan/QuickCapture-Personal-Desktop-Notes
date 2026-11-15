@@ -20,6 +20,22 @@ Local-first desktop note capture app built with **Electron + React + SQLite**.
   - `nodeIntegration: false`
   - IPC bridge through preload only
 
+## Keyboard shortcuts (work from any app)
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl+Alt+N` | New text note |
+| `Ctrl+Alt+R` | Start recording / stop and save |
+| `Ctrl+Alt+T` | Today's to-do list |
+| `Ctrl+Alt+L` | Notes & recordings |
+| `Ctrl+Alt+Space` | Show / hide the widget |
+
+Shortcuts can be turned off from the tray menu (**Keyboard Shortcuts**). If another app already
+uses one of them, QuickCapture skips it and shows a notification.
+
+**Start with Windows** (tray menu) launches QuickCapture hidden in the tray when you sign in.
+When running from source, it starts the production build, so run `npm run build` first.
+
 ## Tech Stack
 
 - Electron

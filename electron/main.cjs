@@ -1,15 +1,32 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, protocol, net, screen, session, shell } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  Tray,
+  Menu,
+  nativeImage,
+  protocol,
+  net,
+  screen,
+  session,
+  shell,
+} = require('electron');
 const { runMigrations } = require('./database/migrations.cjs');
 const { closeDb } = require('./database/connection.cjs');
 const notes = require('./database/noteRepository.cjs');
 const todos = require('./database/todoRepository.cjs');
 const audio = require('./services/audioService.cjs');
+const { getSetting, setSetting } = require('./services/settings.cjs');
+const { isLaunchAtLoginEnabled, setLaunchAtLogin } = require('./services/startup.cjs');
 
 const DEV_SERVER_URL = 'http://localhost:5173';
 const isDev = process.argv.includes('--dev');
+// Set when Windows starts the app at login: stay in the tray until the user needs it.
+let startHidden = process.argv.includes('--hidden');
 const AUDIO_SCHEME = 'qc-audio';
 
 const MAX_TITLE_LENGTH = 200;
@@ -41,6 +58,17 @@ let isQuitting = false;
 let currentMode = 'pill';
 let compactPosition = null; // where the pill/popup lives, restored when leaving the dashboard
 let saveStateTimer = null;
+
+// System-wide shortcuts. Ctrl+Alt combinations avoid clashing with everyday app shortcuts
+// such as Ctrl+Shift+N/T/R in browsers and editors.
+const SHORTCUTS = [
+  { action: 'open-text', accelerator: 'CommandOrControl+Alt+N', label: 'New Text Note' },
+  { action: 'toggle-recording', accelerator: 'CommandOrControl+Alt+R', label: 'Start / Stop Recording', focus: false },
+  { action: 'open-todo', accelerator: 'CommandOrControl+Alt+T', label: "Today's To-do List" },
+  { action: 'open-library', accelerator: 'CommandOrControl+Alt+L', label: 'Notes & Recordings' },
+  { action: 'toggle-widget', accelerator: 'CommandOrControl+Alt+Space', label: 'Show / Hide Widget' },
+];
+let failedShortcuts = [];
 
 /* ---------- window state ---------- */
 
@@ -130,6 +158,28 @@ function showWindow() {
   mainWindow.focus();
 }
 
+/** Shows the widget without taking keyboard focus away from the app the user is working in. */
+function showWindowInactive() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createMainWindow();
+    return;
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  if (!mainWindow.isVisible()) mainWindow.showInactive();
+}
+
+/** Runs a tray/shortcut action: bring the window up, then tell the UI what to open. */
+function runAction(action, { focus = true } = {}) {
+  if (action === 'toggle-widget') {
+    if (mainWindow?.isVisible() && !mainWindow.isMinimized()) mainWindow.hide();
+    else showWindow();
+    return;
+  }
+  if (focus) showWindow();
+  else showWindowInactive();
+  sendToRenderer('tray:action', action);
+}
+
 function sendToRenderer(channel, payload) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   mainWindow.webContents.send(channel, payload);
@@ -163,7 +213,13 @@ function createMainWindow() {
     },
   });
 
-  mainWindow.once('ready-to-show', () => mainWindow?.show());
+  mainWindow.once('ready-to-show', () => {
+    if (startHidden) {
+      startHidden = false; // only the very first window starts hidden
+      return;
+    }
+    mainWindow?.show();
+  });
 
   // This app never needs to open new windows or leave its own page.
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -219,35 +275,100 @@ function createTrayIcon() {
   return nativeImage.createFromBitmap(buffer, { width: size, height: size, scaleFactor: 2 });
 }
 
-function createTray() {
-  tray = new Tray(createTrayIcon());
-  tray.setToolTip('QuickCapture');
+function shortcutFor(action) {
+  if (!getSetting('shortcutsEnabled')) return undefined;
+  const shortcut = SHORTCUTS.find((item) => item.action === action);
+  return shortcut && !failedShortcuts.includes(shortcut.accelerator) ? shortcut.accelerator : undefined;
+}
 
-  const sendAction = (action) => {
-    showWindow();
-    sendToRenderer('tray:action', action);
-  };
+function buildTrayMenu() {
+  // `registerAccelerator: false`: the menu only *displays* the shortcut; globalShortcut handles it.
+  const item = (label, action, options = {}) => ({
+    label,
+    accelerator: shortcutFor(action),
+    registerAccelerator: false,
+    click: () => runAction(action, options),
+  });
 
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open QuickCapture', click: () => sendAction('open-dashboard') },
-    { label: 'New Text Note', click: () => sendAction('open-text') },
-    { label: 'Record Voice Note', click: () => sendAction('open-voice') },
-    { label: "Today's To-do List", click: () => sendAction('open-todo') },
+  return Menu.buildFromTemplate([
+    { label: 'Open Dashboard', click: () => runAction('open-dashboard') },
+    { type: 'separator' },
+    item('New Text Note', 'open-text'),
+    item('Start / Stop Recording', 'toggle-recording', { focus: false }),
+    { label: 'Voice Recorder…', click: () => runAction('open-voice') },
+    item("Today's To-do List", 'open-todo'),
+    item('Notes && Recordings', 'open-library'),
+    { type: 'separator' },
+    item('Show / Hide Widget', 'toggle-widget'),
     { type: 'separator' },
     {
-      label: 'Show/Hide Floating Widget',
-      click: () => {
-        if (mainWindow?.isVisible()) mainWindow.hide();
-        else sendAction('open-pill');
+      label: process.platform === 'darwin' ? 'Open at Login' : 'Start with Windows',
+      type: 'checkbox',
+      checked: isLaunchAtLoginEnabled(),
+      click: (menuItem) => {
+        setLaunchAtLogin(menuItem.checked);
+        refreshTrayMenu();
+      },
+    },
+    {
+      label: 'Keyboard Shortcuts',
+      type: 'checkbox',
+      checked: getSetting('shortcutsEnabled'),
+      click: (menuItem) => {
+        setSetting('shortcutsEnabled', menuItem.checked);
+        registerShortcuts();
+        refreshTrayMenu();
       },
     },
     { type: 'separator' },
     { label: 'Exit Application', click: () => app.quit() },
   ]);
+}
 
-  tray.setContextMenu(contextMenu);
+function refreshTrayMenu() {
+  tray?.setContextMenu(buildTrayMenu());
+}
+
+function createTray() {
+  tray = new Tray(createTrayIcon());
+  tray.setToolTip('QuickCapture');
+  refreshTrayMenu();
   // Just bring the window back; don't throw away whatever the user was doing in it.
   tray.on('click', showWindow);
+}
+
+/* ---------- global shortcuts ---------- */
+
+function registerShortcuts() {
+  globalShortcut.unregisterAll();
+  failedShortcuts = [];
+  if (!getSetting('shortcutsEnabled')) return;
+
+  for (const { action, accelerator, focus } of SHORTCUTS) {
+    let registered = false;
+    try {
+      registered = globalShortcut.register(accelerator, () => runAction(action, { focus: focus !== false }));
+    } catch (error) {
+      console.error(`Could not register ${accelerator}`, error);
+    }
+    if (!registered) failedShortcuts.push(accelerator);
+  }
+
+  if (failedShortcuts.length > 0) {
+    // Usually means another app already owns the combination.
+    const list = failedShortcuts.map(displayAccelerator).join(', ');
+    console.warn(`Shortcuts already in use by another app: ${list}`);
+    if (process.platform === 'win32' && tray) {
+      tray.displayBalloon({
+        title: 'QuickCapture',
+        content: `These shortcuts are used by another app and were skipped: ${list}`,
+      });
+    }
+  }
+}
+
+function displayAccelerator(accelerator) {
+  return accelerator.replace('CommandOrControl', process.platform === 'darwin' ? 'Cmd' : 'Ctrl');
 }
 
 /* ---------- IPC ---------- */
@@ -286,6 +407,13 @@ function toBuffer(data) {
 
 function registerIpcHandlers() {
   ipcMain.handle('app:set-mode', (_event, mode) => ({ ok: setWindowMode(mode) }));
+
+  // Active shortcuts, for showing them in tooltips: { [action]: 'Ctrl+Alt+N' }
+  ipcMain.handle('app:get-shortcuts', () =>
+    Object.fromEntries(
+      SHORTCUTS.filter(({ action }) => shortcutFor(action)).map(({ action, accelerator }) => [action, displayAccelerator(accelerator)])
+    )
+  );
 
   ipcMain.handle('app:hide-widget', () => {
     mainWindow?.hide();
@@ -429,6 +557,8 @@ if (!app.requestSingleInstanceLock()) {
 
     createMainWindow();
     createTray();
+    registerShortcuts();
+    refreshTrayMenu(); // reflect any shortcut that could not be registered
 
     app.on('activate', showWindow);
   });
@@ -439,6 +569,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
     tray?.destroy();
     closeDb();
   });

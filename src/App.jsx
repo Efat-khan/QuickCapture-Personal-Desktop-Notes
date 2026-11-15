@@ -86,6 +86,7 @@ function App() {
   const isLibrary = mode === MODES.library;
   const isPill = mode === MODES.pill;
   const [openTodayCount, setOpenTodayCount] = useState(0);
+  const [shortcuts, setShortcuts] = useState({}); // { [action]: 'Ctrl+Alt+N' } for tooltips
 
   const switchMode = useCallback((nextMode) => {
     setMode(nextMode);
@@ -115,16 +116,10 @@ function App() {
 
   /* ---------- effects ---------- */
 
-  // Tray actions: subscribe once (previously re-subscribed on every keystroke in the search box).
-  useEffect(() => {
-    return api.app.onTrayAction((action) => {
-      if (action === 'open-dashboard') switchMode(MODES.dashboard);
-      else if (action === 'open-text') openTextEditor(MODES.pill);
-      else if (action === 'open-voice') switchMode(MODES.voice);
-      else if (action === 'open-todo') switchMode(MODES.todo);
-      else switchMode(MODES.pill);
-    });
-  }, [switchMode, openTextEditor]);
+  // Tray menu and global shortcuts. Subscribed once; the ref always points at the latest handler
+  // (it needs current state, e.g. whether a recording is running). Assigned below, after the actions.
+  const appActionRef = useRef(null);
+  useEffect(() => api.app.onTrayAction((action) => appActionRef.current?.(action)), []);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -186,6 +181,13 @@ function App() {
       .list(toDayKey())
       .then((list) => {
         if (!cancelled) setOpenTodayCount(list.filter((todo) => !todo.done).length);
+      })
+      .catch(() => {});
+    // Refreshed here too, so turning shortcuts on/off in the tray is reflected in the tooltips.
+    api.app
+      .getShortcuts()
+      .then((result) => {
+        if (!cancelled) setShortcuts(result ?? {});
       })
       .catch(() => {});
     return () => {
@@ -351,6 +353,43 @@ function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [mode, closeTextEditor, closeVoiceRecorder, switchMode]);
 
+  const handleAppAction = (action) => {
+    switch (action) {
+      case 'open-text':
+        if (mode !== MODES.text) openTextEditor(mode === MODES.dashboard || mode === MODES.library ? mode : MODES.pill);
+        break;
+      case 'toggle-recording':
+        // One shortcut to start and stop. Stopping saves, exactly like the stop button on the widget.
+        if (recorder.status === 'recording' || recorder.status === 'paused') {
+          finishQuickRecording();
+        } else if (recorder.status === 'idle' || recorder.status === 'error') {
+          switchMode(MODES.pill);
+          startQuickRecording();
+        }
+        break;
+      case 'open-todo':
+        switchMode(MODES.todo);
+        break;
+      case 'open-library':
+        switchMode(MODES.library);
+        break;
+      case 'open-voice':
+        switchMode(MODES.voice);
+        break;
+      case 'open-dashboard':
+        switchMode(MODES.dashboard);
+        break;
+      default:
+        switchMode(MODES.pill);
+    }
+  };
+  useEffect(() => {
+    appActionRef.current = handleAppAction;
+  });
+
+  // Tooltip text with the keyboard shortcut, when one is active.
+  const withShortcut = (label, action) => (shortcuts[action] ? `${label} (${shortcuts[action]})` : label);
+
   /* ---------- views ---------- */
 
   const openRecordingsFolder = async () => {
@@ -390,7 +429,12 @@ function App() {
           </button>
         )}
         {(recorder.status === 'recording' || recorder.status === 'paused') && (
-          <button className="pill-btn stop" onClick={finishQuickRecording} title="Stop and save" aria-label="Stop and save">
+          <button
+            className="pill-btn stop"
+            onClick={finishQuickRecording}
+            title={withShortcut('Stop and save', 'toggle-recording')}
+            aria-label="Stop and save"
+          >
             <Square size={14} fill="currentColor" />
           </button>
         )}
@@ -418,22 +462,22 @@ function App() {
         <AudioLines size={14} />
       </span>
       <div className="pill-actions no-drag">
-        <button className="pill-btn" onClick={() => openTextEditor(MODES.pill)} title="New text note" aria-label="New text note">
+        <button className="pill-btn" onClick={() => openTextEditor(MODES.pill)} title={withShortcut('New text note', 'open-text')} aria-label="New text note">
           <SquarePen size={15} />
         </button>
-        <button className="pill-btn" onClick={startQuickRecording} title="Start recording" aria-label="Start recording">
+        <button className="pill-btn" onClick={startQuickRecording} title={withShortcut('Start recording', 'toggle-recording')} aria-label="Start recording">
           <Mic size={15} />
         </button>
         <button
           className="pill-btn"
           onClick={() => switchMode(MODES.todo)}
-          title={openTodayCount ? `To-do (${openTodayCount} left today)` : 'To-do'}
+          title={withShortcut(openTodayCount ? `To-do (${openTodayCount} left today)` : 'To-do', 'open-todo')}
           aria-label="To-do"
         >
           <ListTodo size={15} />
           {openTodayCount > 0 && <span className="pill-badge">{openTodayCount > 99 ? '99+' : openTodayCount}</span>}
         </button>
-        <button className="pill-btn" onClick={() => switchMode(MODES.library)} title="Notes & recordings" aria-label="Library">
+        <button className="pill-btn" onClick={() => switchMode(MODES.library)} title={withShortcut('Notes & recordings', 'open-library')} aria-label="Library">
           <LibraryBig size={15} />
         </button>
         <span className="pill-divider" />

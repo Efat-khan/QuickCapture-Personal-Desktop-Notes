@@ -1274,3 +1274,118 @@ button:focus-visible,
 .todo-clear {
   margin-right: auto;
 }
+
+/* ---------- filters (Library + To-do) ---------- */
+
+.filter-bar {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-main);
+  color: var(--text-muted);
+  transition: border-color 0.15s;
+}
+
+.filter-search:focus-within {
+  border-color: var(--accent-primary);
+  color: var(--text-main);
+}
+
+.filter-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.filter-search input::placeholder {
+  color: #5f6678;
+}
+
+.filter-clear {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+.filter-clear:hover:not(:disabled) {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.filter-select {
+  flex-shrink: 0;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.filter-select:focus-visible {
+  border-color: var(--accent-primary);
+}
+
+/* Highlighted while a date range is applied, so an active filter is never invisible. */
+.filter-select.active {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.todo-filters {
+  display: flex;
+  gap: 4px;
+}
+
+.todo-filter {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.todo-filter:hover:not(:disabled) {
+  border-color: var(--border);
+  color: var(--text-main);
+}
+
+.todo-filter.active,
+.todo-filter.active:hover:not(:disabled) {
+  border-color: rgba(24, 201, 220, 0.45);
+  background: rgba(24, 201, 220, 0.12);
+  color: var(--accent-cyan);
+}
+
+.todo-filter-count {
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  line-height: 16px;
+}

@@ -188,8 +188,6 @@ function App() {
 
   const libraryNotes = useMemo(() => (library ?? []).filter((note) => note.note_type === 'text'), [library]);
   const libraryRecordings = useMemo(() => (library ?? []).filter((note) => note.note_type === 'audio'), [library]);
-  const groupedLibraryNotes = useMemo(() => groupByDate(libraryNotes), [libraryNotes]);
-  const groupedLibraryRecordings = useMemo(() => groupByDate(libraryRecordings), [libraryRecordings]);
 
   const grouped = useMemo(() => groupByDate(notes), [notes]);
 
@@ -666,10 +664,8 @@ function App() {
         <LibraryPanel
           tab={libraryTab}
           onTabChange={setLibraryTab}
-          noteGroups={groupedLibraryNotes}
-          noteCount={libraryNotes.length}
-          recordingGroups={groupedLibraryRecordings}
-          recordingCount={libraryRecordings.length}
+          notes={libraryNotes}
+          recordings={libraryRecordings}
           loading={library === null}
           onEditNote={(note) => openTextEditor(MODES.library, note)}
           onNewNote={() => openTextEditor(MODES.library)}

@@ -78,6 +78,17 @@ const TodoItem = memo(function TodoItem({ todo, onToggle, onEdit, onDelete }) {
   );
 });
 
+const FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
+  { key: 'done', label: 'Done' },
+];
+
+const EMPTY_FILTER_TEXT = {
+  active: 'No active tasks. Nice work!',
+  done: 'No finished tasks yet.',
+};
+
 function sortTodos(items) {
   // Open tasks first (in the order they were added), finished ones underneath.
   return [...items].sort((a, b) => a.done - b.done || a.position - b.position || a.id - b.id);
@@ -94,11 +105,18 @@ export function TodoPanel({ notify, onClose }) {
   const [reloadToken, setReloadToken] = useState(0);
   const [draft, setDraft] = useState('');
   const inputRef = useRef(null);
+  // Kept when moving between days, so you can e.g. step through days looking only at open tasks.
+  const [filter, setFilter] = useState('all');
 
   const items = loaded.day === day ? loaded.items : null;
   const sorted = useMemo(() => (items ? sortTodos(items) : []), [items]);
   const doneCount = sorted.filter((todo) => todo.done).length;
   const total = sorted.length;
+  const filterCounts = { all: total, active: total - doneCount, done: doneCount };
+  const visible = useMemo(
+    () => (filter === 'all' ? sorted : sorted.filter((todo) => (filter === 'done' ? todo.done : !todo.done))),
+    [sorted, filter]
+  );
   const isToday = day === today;
   const carryOverCount = isToday && olderOpen.day === day ? olderOpen.count : 0;
   const { label, date } = describeDay(day, today);
@@ -126,6 +144,8 @@ export function TodoPanel({ notify, onClose }) {
     const text = draft.trim();
     if (!text) return;
     setDraft('');
+    // A new task is never "done", so make sure it is visible.
+    if (filter === 'done') setFilter('all');
     try {
       const todo = await api.todos.create(day, text);
       setLoaded((previous) => (previous.day === day ? { ...previous, items: [...previous.items, todo] } : previous));
@@ -260,11 +280,29 @@ export function TodoPanel({ notify, onClose }) {
         </button>
       </form>
 
+      {total > 0 && (
+        <div className="todo-filters" role="tablist" aria-label="Show tasks">
+          {FILTERS.map(({ key, label: filterLabel }) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={filter === key}
+              className={`todo-filter ${filter === key ? 'active' : ''}`}
+              onClick={() => setFilter(key)}
+            >
+              {filterLabel}
+              <span className="todo-filter-count">{filterCounts[key]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <ul className="todo-list">
         {items !== null && total === 0 && (
           <li className="todo-empty">{isToday ? 'Nothing planned yet. Add your first task above.' : 'No tasks on this day.'}</li>
         )}
-        {sorted.map((todo) => (
+        {total > 0 && visible.length === 0 && <li className="todo-empty">{EMPTY_FILTER_TEXT[filter]}</li>}
+        {visible.map((todo) => (
           <TodoItem key={todo.id} todo={todo} onToggle={toggleTask} onEdit={editTask} onDelete={deleteTask} />
         ))}
       </ul>
